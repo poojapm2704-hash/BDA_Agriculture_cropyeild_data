@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agricultural Crop Yield Data System | MongoDB Big Data Analytics</title>
+  
+  <!-- Google Fonts & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Glassmorphic Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Glass Navbar -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">🌱</div>
+        <div class="brand-text">
+          <h1>Agricultural Crop Yield System</h1>
+          <p>BDA MongoDB Analytics & Crop Growth Optimization</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <span id="mongoStatusBadge" class="badge badge-blue">MongoDB Connected</span>
+        <a href="/api/export-csv" class="btn btn-secondary" style="margin-right: 8px;">
+          📊 Export Dataset (CSV)
+        </a>
+        <a href="/api/download-report" class="btn btn-primary" id="btnDownloadReport">
+          📄 Download Executive PDF Report
+        </a>
+      </div>
+    </header>
+
+    <!-- Top Executive Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Total Farm Records</span>
+          <span class="stat-icon">🚜</span>
+        </div>
+        <div class="stat-value" id="statRecords">20,500</div>
+        <div class="stat-desc">FAOSTAT + Synthetic Sensor Logs</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Crop Species</span>
+          <span class="stat-icon">🌾</span>
+        </div>
+        <div class="stat-value" id="statCrops">7</div>
+        <div class="stat-desc">Wheat, Rice, Maize, Soy, Potato, etc.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Global Regions</span>
+          <span class="stat-icon">🌍</span>
+        </div>
+        <div class="stat-value" id="statRegions">8</div>
+        <div class="stat-desc">North America, Asia, Europe, Africa</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Avg Annual Yield</span>
+          <span class="stat-icon">📊</span>
+        </div>
+        <div class="stat-value" id="statAvgYield">17.1 <small style="font-size: 1rem;">tons/ha</small></div>
+        <div class="stat-desc">Cross-crop Weighted Average</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-header">
+      <button class="tab-btn active" onclick="switchTab('chartsTab')">📊 Analytics & Graphs</button>
+      <button class="tab-btn" onclick="switchTab('queryTab')">⚡ MongoDB MQL Queries (5)</button>
+      <button class="tab-btn" onclick="switchTab('predictorTab')">🔮 Yield Predictor Tool</button>
+      <button class="tab-btn" onclick="switchTab('anomalyTab')">🚨 Anomaly Alert Center</button>
+      <button class="tab-btn" onclick="switchTab('compareTab')">⚖️ Crop Matrix Comparator</button>
+      <button class="tab-btn" onclick="switchTab('dataTab')">🔍 Farm Data Inspector</button>
+    </div>
+
+    <!-- TAB 1: CHARTS & ANALYTICS -->
+    <section id="chartsTab" class="tab-content active">
+      <div class="charts-grid">
+        <!-- Crop Yield Bar Chart (Requirement #4) -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Crop Type vs. Average Yield</div>
+              <div class="chart-subtitle">Yield comparison in tons/hectare across 7 crop varieties</div>
+            </div>
+            <span class="badge badge-green">Bar Chart</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="yieldBarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Rainfall vs Yield Scatter Plot (Requirement #5) -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Impact of Rainfall on Crop Output</div>
+              <div class="chart-subtitle">Scatter plot correlating annual rainfall (mm) vs yield (tons/ha)</div>
+            </div>
+            <span class="badge badge-blue">Scatter Plot</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="rainfallScatterChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Regional Distribution Donut -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Top 5 Regions Agricultural Output</div>
+              <div class="chart-subtitle">Share of total crop production by global region</div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="regionDonutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Soil pH vs Moisture Radar -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Optimal Soil Growing Parameters</div>
+              <div class="chart-subtitle">Ideal soil pH and sensor moisture levels per crop</div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="soilRadarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: MONGODB QUERY WORKBENCH -->
+    <section id="queryTab" class="tab-content">
+      <div class="query-card">
+        <div class="chart-header" style="margin-bottom: 12px;">
+          <div class="chart-title">MongoDB Aggregation Pipeline Explorer</div>
+          <span class="badge badge-blue">PyMongo MQL Pipeline</span>
+        </div>
+
+        <div class="query-selector-bar">
+          <button class="q-btn active" onclick="loadQuery(1)">Query 1: Avg Yield by Crop</button>
+          <button class="q-btn" onclick="loadQuery(2)">Query 2: Top 5 Regions</button>
+          <button class="q-btn" onclick="loadQuery(3)">Query 3: Yield vs Rainfall</button>
+          <button class="q-btn" onclick="loadQuery(4)">Query 4: Optimal Soil Conditions</button>
+          <button class="q-btn" onclick="loadQuery(5)">Query 5: YoY Growth Patterns</button>
+        </div>
+
+        <p id="queryDesc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 12px;"></p>
+        
+        <div class="code-box">
+          <pre><code id="queryMqlCode">// MQL aggregation pipeline code...</code></pre>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="custom-table" id="queryResultTable">
+            <thead id="queryTableHeader"></thead>
+            <tbody id="queryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: YIELD PREDICTOR TOOL -->
+    <section id="predictorTab" class="tab-content">
+      <div class="query-card">
+        <div class="chart-header" style="margin-bottom: 16px;">
+          <div>
+            <div class="chart-title">Machine Learning Yield Predictor & Condition Optimizer</div>
+            <div class="chart-subtitle">Simulate soil and IoT sensor parameters to estimate farm yield output</div>
+          </div>
+        </div>
+
+        <form id="predictorForm" onsubmit="calculateYield(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Crop Type</label>
+              <select id="predCrop" class="form-control">
+                <option value="Wheat">Wheat</option>
+                <option value="Rice" selected>Rice</option>
+                <option value="Maize">Maize</option>
+                <option value="Soybeans">Soybeans</option>
+                <option value="Barley">Barley</option>
+                <option value="Potato">Potato</option>
+                <option value="Sugarcane">Sugarcane</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Soil pH Level (4.5 - 8.5)</label>
+              <input type="number" step="0.1" id="predPh" class="form-control" value="6.5" min="4.0" max="9.0">
+            </div>
+
+            <div class="form-group">
+              <label>Annual Rainfall (mm)</label>
+              <input type="number" step="10" id="predRain" class="form-control" value="1200" min="200" max="3000">
+            </div>
+
+            <div class="form-group">
+              <label>Fertilizer (kg/ha)</label>
+              <input type="number" step="5" id="predFert" class="form-control" value="180" min="10" max="500">
+            </div>
+
+            <div class="form-group">
+              <label>Soil Moisture Log (%)</label>
+              <input type="number" step="1" id="predMoist" class="form-control" value="50" min="10" max="100">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            ⚡ Calculate Predicted Annual Yield
+          </button>
+        </form>
+
+        <div id="predictResultBanner" class="result-banner" style="display: none;">
+          <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Estimated Annual Output</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #34D399;" id="resYield">-- tons/ha</div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Agronomic Health Score</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #60A5FA;" id="resScore">-- / 100</div>
+          </div>
+          <div style="width: 100%; border-top: 1px solid var(--border-color); pt-3; font-size: 0.85rem; color: var(--text-muted);" id="resTargets">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ANOMALY ALERT CENTER (EXTRA FEATURE) -->
+    <section id="anomalyTab" class="tab-content">
+      <div class="query-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">🚨 Real-time Soil & IoT Sensor Anomaly Alerts</div>
+            <div class="chart-subtitle">Detects acidic/alkaline soil stress, extreme temperatures, and severe moisture drought</div>
+          </div>
+          <span class="badge badge-green" id="anomalyBadgeCount">0 Alerts Detected</span>
+        </div>
+
+        <div class="table-wrapper" style="margin-top: 16px;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Farm ID</th>
+                <th>Region</th>
+                <th>Crop Type</th>
+                <th>Soil pH</th>
+                <th>Moisture (%)</th>
+                <th>Temp (°C)</th>
+                <th>Detected Sensor Warnings</th>
+              </tr>
+            </thead>
+            <tbody id="anomalyTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: CROP MATRIX COMPARATOR (EXTRA FEATURE) -->
+    <section id="compareTab" class="tab-content">
+      <div class="query-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">⚖️ Side-by-Side Crop Comparison Matrix</div>
+            <div class="chart-subtitle">Compare yield efficiency, soil pH windows, and fertilizer requirements</div>
+          </div>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+          <div class="form-group">
+            <label>Crop 1</label>
+            <select id="compCrop1" class="form-control" onchange="fetchComparison()">
+              <option value="Wheat" selected>Wheat</option>
+              <option value="Rice">Rice</option>
+              <option value="Maize">Maize</option>
+              <option value="Soybeans">Soybeans</option>
+              <option value="Barley">Barley</option>
+              <option value="Potato">Potato</option>
+              <option value="Sugarcane">Sugarcane</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crop 2</label>
+            <select id="compCrop2" class="form-control" onchange="fetchComparison()">
+              <option value="Wheat">Wheat</option>
+              <option value="Rice" selected>Rice</option>
+              <option value="Maize">Maize</option>
+              <option value="Soybeans">Soybeans</option>
+              <option value="Barley">Barley</option>
+              <option value="Potato">Potato</option>
+              <option value="Sugarcane">Sugarcane</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crop 3</label>
+            <select id="compCrop3" class="form-control" onchange="fetchComparison()">
+              <option value="Wheat">Wheat</option>
+              <option value="Rice">Rice</option>
+              <option value="Maize" selected>Maize</option>
+              <option value="Soybeans">Soybeans</option>
+              <option value="Barley">Barley</option>
+              <option value="Potato">Potato</option>
+              <option value="Sugarcane">Sugarcane</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Agronomic Metric</th>
+                <th id="compHead1">Crop 1</th>
+                <th id="compHead2">Crop 2</th>
+                <th id="compHead3">Crop 3</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: FARM DATA INSPECTOR -->
+    <section id="dataTab" class="tab-content">
+      <div class="query-card">
+        <div class="chart-header">
+          <div class="chart-title">Farm Collection Live Browser</div>
+          <span class="badge badge-blue">Embedded Sensor Sub-documents</span>
+        </div>
+
+        <div class="table-wrapper" style="margin-top: 16px;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Farm ID</th>
+                <th>Region</th>
+                <th>Crop Type</th>
+                <th>Soil pH</th>
+                <th>Rainfall (mm)</th>
+                <th>Fertilizer (kg/ha)</th>
+                <th>Yield (tons/ha)</th>
+                <th>Year</th>
+                <th>Embedded Sensors</th>
+              </tr>
+            </thead>
+            <tbody id="farmInspectorBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
